@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace P2P.Models
 {
-    public class NodeFileInfo
+    public class ConfigPair
     {
-        public int NodeName { get; set; }
-        public List<string> NodeFiles { get; set; }
+        public Config Config { get; set; }
+        public NodeFilesInfo NodeFilesInfo { get; set; }
     }
 }

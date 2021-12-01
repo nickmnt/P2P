@@ -11,6 +11,9 @@ using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using P2P.Models;
+using Microsoft.Extensions.DependencyInjection;
+using P2P.Utility;
+using System.Net.Http;
 
 namespace P2P
 {
@@ -18,23 +21,25 @@ namespace P2P
     {
         public static async Task Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
-            //Read Yaml
-            var configYml = File.ReadAllText("Config.yml");
-            var nodeFilesYml = File.ReadAllText("NodeFiles.yml");
+            var configsTmp = new ConfigLoader();
+            var host = CreateHostBuilder(args)
+                .ConfigureWebHostDefaults(builder =>
+                {
+                    builder.UseStartup<Startup>();
+                    builder.UseUrls($"https://localhost:{configsTmp.Config.NodePort}");
+                }).Build();
 
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(UnderscoredNamingConvention.Instance)
-                .Build();
-
-            var config = deserializer.Deserialize<Config>(configYml);
-            var nodeFilesInfo = deserializer.Deserialize<NodeFilesInfo>(nodeFilesYml);
-
+            using var scope = host.Services.CreateScope();
+            var configs = scope.ServiceProvider.GetRequiredService<IConfigLoader>();
+            var httpClient = scope.ServiceProvider.GetRequiredService<IHttpClientFactory>()
+                .CreateClient();
+            
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
-                Terminal.TerminalHandler.Run();
+                Terminal.TerminalHandler.Run(configs, httpClient);
             }).Start();
+
             await host.RunAsync();
         }
 
