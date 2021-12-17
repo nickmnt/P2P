@@ -12,6 +12,12 @@ namespace P2P.Terminal
     {
         public static void Run(IConfigLoader configs, HttpClient httpClient)
         {
+            if(configs.Config.FriendNodes == null)
+            {
+                Console.WriteLine("No friend nodes, cannot request anything");
+                return;
+            }
+
             while(true)
             { 
                 var input = Console.ReadLine();
